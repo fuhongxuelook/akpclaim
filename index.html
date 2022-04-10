@@ -664,8 +664,20 @@
             alert('MetaMask is not installed!');
         } else {
             if (window.ethereum.chainId != "0x61") { //test 0x61 BSC 0x38
-                showResult(jQuery("#connect-wallet"), "Connect wallet");
-                showResult(jQuery("#say") ,"Wrong network, please switch to BSC network")
+                window.ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [{
+                      chainId: "0x61",
+                      rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545"],
+                      chainName: "BSC Test",
+                      nativeCurrency: {
+                          name: "tBNB",
+                          symbol: "tBNB",
+                          decimals: 18
+                    },
+                    blockExplorerUrls: ["https://testnet.bscscan.com"]
+                }]
+            });
                 return;
             }
         }
