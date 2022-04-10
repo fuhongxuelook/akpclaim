@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv = "X-UA-Compatible" content = "IE=edge,chrome=1">
+    <title>AKP Claim</title>
+    <!-- <link rel="stylesheet" type="text/css" href="web.css" /> -->
+    <link href="web-1.css" rel="stylesheet" type="text/css" >
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+</head>
+        
+<body>
+    <div class="container">
+        <div class="company-menu">
+            <div class="company-info">
+                <img  class="company-logo" src="imgs/companyLogo.png"/>
+                <img  class="company-name" src="imgs/companyName.png"/>
+            </div>
+            <div class="menu">
+                <ul>
+                    <li id="connect-wallet">
+                        <div>
+                            <img src="imgs/wallet-1.png">
+                            <img class="item-selected" src="imgs/wallet-1-selected.png">
+                            <p>CONNECT WALLET</p>
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <span id="say"></span>
+                        </div>
+                    </li>
+                    <li id="redeem-akp">
+                        <div>
+                            <img src="imgs/redeem.png">
+                            <img class="item-selected" src="imgs/redeem-selected.png">
+                            <p>REDEEM AKP</p>
+                        </div>
+                    </li>
+                    <li id="info">
+                        <div>
+                            <img src="imgs/info.png">
+                            <img class="item-selected" src="imgs/Info-selected.png">
+                            <p>INFO</p>
+                        </div>
+                        
+                    </li>
+                    <li id="virtual-box">
+                        <div></div>
+                    </li>             
+                </ul>
+            </div>
+        </div>
+        <div class="item">
+            <div class="white-line"></div>
+            <p class="item-name">Info</p>
+            <div class="item-content-container">
+                <div class="item-content">
+                    epoch<br>
+                    Each redeem interval is <span class="item-interval">30 days</span><br>
+                    Time was calculated at last Redeem
+                </div>
+                <div class="item-content">
+                    <p class="item-content-name">BALANCE : </p>
+                    <p id="bal" class="item-content-value"></p>
+                </div>
+                <div class="item-content">
+                    <p class="item-content-name">NEXT REDEEM DATE :</p>
+                    <p id="nextRedeemDate" class="item-content-value"></p>
+                </div>
+
+                <div class="item-content">
+                    <p class="item-content-name">LEFT REDEEM TIMES : </p>
+                    <p id="leftRedeemTimes" class="item-content-value"></p>
+                </div>
+            </div>
+
+        </div>
+    </div>  
+</body>
+
+<script>
+
+    let abi = [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "akp",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "redeemAddr",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redeemTimes",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redeemNum",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redeemTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "RedeemInfo",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "redeemAddr",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redeemTimes",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redeemNum",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "redeemTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "StakeInfo",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "AKP",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "name": "allowance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "addrs",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "amounts",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "batchSafeMint",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "canRedeem",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "changeCanRedeem",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "newTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeRedeemWaitTime",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "subtractedValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "decreaseAllowance",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "addedValue",
+          "type": "uint256"
+        }
+      ],
+      "name": "increaseAllowance",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "initAKPBalance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nextRedeemDate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "redeemAKP",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "redeemTimes",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "redeemWaitTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "safeMint",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "takeBack",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+
+    var signer;
+    var provider;
+    var akprelease;
+    var myAddress;
+    let Contract = '0x9b9fA8fe91Ffa1435dc7bE3bFBD34fCE3E11e285';
+
+    function showResult(node, msg) {
+        node.text(msg);
+    }
+
+    jQuery("#connect-wallet").click(async function () {
+        await window.ethereum.enable()
+        if (typeof window.ethereum == 'undefined') {
+            alert('MetaMask is not installed!');
+        } else {
+            if (window.ethereum.chainId != "0x61") { //test 0x61 BSC 0x38
+                showResult(jQuery("#connect-wallet"), "Connect wallet");
+                showResult(jQuery("#say") ,"Wrong network, please switch to BSC network")
+                return;
+            }
+        }
+
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        // The MetaMask plugin also allows signing transactions to
+        // send ether and pay to change state within the blockchain.
+        // For this, you need the account signer...
+        signer = provider.getSigner();
+        myAddress = await signer.getAddress();
+        akprelease = new ethers.Contract(Contract, abi, signer);
+        showResult(jQuery("#connect-wallet"), myAddress);
+        showResult(jQuery("#say"), "");
+        info();
+
+    });
+
+    jQuery("#redeem-akp").click(async function () {
+        redeem();
+    });
+
+    jQuery("#withdraw-shib").click(async function () {
+        withdraw();
+
+    });
+
+    jQuery("#info").click(async function () {
+        info();
+
+    });
+    
+    jQuery("#refresh").click(async function () {
+        refresh();
+
+    });
+
+
+
+    async function redeem() {
+
+        // let funcCode = ethers.utils.hexDataSlice(ethers.utils.id("redeemSKP()"), 0, 4);
+
+        // let data = ethers.utils.hexConcat([
+        //     funcCode
+        // ]);
+        // let t = {//签名，发送交易
+        //     to: Contract,//发送至以太坊域名
+        //     data: data
+        // }
+
+
+        // const tx0 = await signer.sendTransaction(t);
+
+        // await tx0.wait();
+        let redeemAkp_tx = await akprelease.redeemAKP()
+        await redeemAkp_tx.wait();
+
+        console.log(tx0);
+
+    }
+
+
+    async function refresh() {
+       
+        await tx0.wait();
+
+    }
+
+    
+
+    async function info() {
+
+        let nextRedeemDate = await akprelease.nextRedeemDate(myAddress);
+
+        let balance = await akprelease.balanceOf(myAddress);
+
+
+
+        let redeemTime = await akprelease.redeemTimes(myAddress);
+
+        balance = (balance/1e9).toFixed(2);
+        showResult(jQuery("#bal"), balance);
+
+        showResult(jQuery("#nextRedeemDate"), timestampConvert(nextRedeemDate.toNumber()));
+        
+        showResult(jQuery("#leftRedeemTimes"),11 - redeemTime);
+    }
+
+    function timestampConvert(tm) {
+        if(tm == 0) {
+            return "NaN";
+        }
+        var sd = new Date(tm * 1000).toLocaleDateString("en-US")
+        var st = new Date(tm * 1000).toLocaleTimeString("en-US")
+        return sd + " - " + st;
+    }
+
+
+
+
+</script>
+
+
+</html>
